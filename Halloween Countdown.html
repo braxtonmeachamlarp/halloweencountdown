@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HALLOWEEN // COUNTDOWN</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Saira+Stencil+One&family=Share+Tech+Mono&display=swap">
+<style>
+  :root{
+    --void:#060403;
+    --blood:#7a0505;
+    --blood-bright:#c81d1d;
+    --bone:#cfc3a8;
+    --bone-dim:#8c806a;
+    --amber:#d98e04;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top, 0px);
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ scroll-padding-top:env(safe-area-inset-top, 0px); }
+
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--void);
+    overflow:hidden;
+    cursor:default;
+  }
+  body{
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Special Elite', monospace;
+    color:var(--bone);
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* film grain */
+  .grain{
+    position:fixed; inset:-50%;
+    width:200%; height:200%;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+    opacity:0.06;
+    pointer-events:none;
+    animation:grain-shift 0.4s steps(2) infinite;
+    z-index:50;
+    mix-blend-mode:overlay;
+  }
+  @keyframes grain-shift{
+    0%{ transform:translate(0,0); }
+    50%{ transform:translate(-2%,1%); }
+    100%{ transform:translate(1%,-2%); }
+  }
+
+  .vignette{
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:40;
+    background:radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.85) 100%);
+  }
+  .pulse-glow{
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:5;
+    background:radial-gradient(ellipse at 50% 55%, rgba(122,5,5,0.35) 0%, rgba(0,0,0,0) 55%);
+    animation:heartbeat 1.15s infinite;
+  }
+
+  .scanlines{
+    position:fixed; inset:0;
+    z-index:45;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.0) 0px,
+      rgba(0,0,0,0.15) 1px,
+      rgba(0,0,0,0.0) 2px
+    );
+    opacity:0.5;
+  }
+
+  /* views: live countdown + archive */
+  .scene{
+    position:relative;
+    z-index:10;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding:24px;
+    width:100%;
+    max-width:900px;
+  }
+  body[data-view="live"] #live{ display:flex; }
+  body[data-view="archive"] #archive{ display:flex; }
+
+  .eyebrow{
+    letter-spacing:0.45em;
+    font-size:clamp(11px,1.6vw,15px);
+    color:var(--bone-dim);
+    margin-bottom:18px;
+    text-transform:uppercase;
+  }
+
+  h1.title{
+    font-family:'Anton', sans-serif;
+    font-size:clamp(2.8rem, 10vw, 7rem);
+    color:var(--bone);
+    margin:0 0 6px 0;
+    line-height:0.9;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    text-shadow:
+      0 0 10px rgba(200,29,29,0.5),
+      0 0 34px rgba(122,5,5,0.4),
+      3px 3px 0 #000;
+    animation:title-flicker 5s infinite;
+  }
+
+  .date-line{
+    font-size:clamp(0.85rem,2vw,1.1rem);
+    color:var(--bone);
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    margin-top:14px;
+    margin-bottom:44px;
+    opacity:0.85;
+  }
+  .date-line span{ color:var(--amber); }
+
+  .countdown{
+    display:flex;
+    gap:clamp(10px,3vw,34px);
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+
+  .unit{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-width:64px;
+  }
+
+  .num{
+    font-family:'Anton', sans-serif;
+    font-size:clamp(2.8rem,9vw,6.5rem);
+    line-height:1;
+    color:var(--bone);
+    text-shadow:
+      0 0 8px rgba(200,29,29,0.7),
+      0 0 26px rgba(122,5,5,0.65),
+      2px 2px 0 rgba(0,0,0,0.8);
+    animation:heartbeat-scale 1.15s infinite;
+    position:relative;
+  }
+
+  .num.glitch{
+    animation:heartbeat-scale 1.15s infinite, glitch-jump 0.14s steps(2);
+  }
+
+  .label{
+    margin-top:6px;
+    font-size:clamp(10px,1.4vw,13px);
+    letter-spacing:0.35em;
+    text-transform:uppercase;
+    color:var(--bone-dim);
+  }
+
+  .sep{
+    font-family:'Anton', sans-serif;
+    font-size:clamp(2rem,6vw,4rem);
+    color:var(--blood);
+    align-self:flex-start;
+    margin-top:6px;
+    opacity:0.7;
+  }
+
+  /* archived countdown: flatlined, no pulse */
+  #archive h1.title{ animation:none; opacity:0.8; }
+  #archive .num{
+    animation:none;
+    color:var(--bone-dim);
+    text-shadow:0 0 6px rgba(122,5,5,0.35), 2px 2px 0 rgba(0,0,0,0.8);
+  }
+  body[data-view="archive"] .pulse-glow{ animation:none; opacity:0.22; }
+
+  .nav-link{
+    position:fixed;
+    bottom:calc(22px + env(safe-area-inset-bottom, 0px));
+    left:22px;
+    z-index:60;
+    color:var(--bone-dim);
+    border:1px solid var(--bone-dim);
+    font-family:'Special Elite', monospace;
+    letter-spacing:0.15em;
+    font-size:11px;
+    padding:8px 14px;
+    text-transform:uppercase;
+    text-decoration:none;
+    opacity:0.55;
+    transition:opacity 0.2s, color 0.2s, border-color 0.2s;
+    display:none;
+  }
+  body[data-view="live"] #toArchive{ display:inline-block; }
+  body[data-view="archive"] #toLive{ display:inline-block; }
+  .nav-link:hover{
+    opacity:1;
+    color:var(--blood-bright);
+    border-color:var(--blood-bright);
+  }
+
+  .sound-toggle{
+    position:fixed;
+    bottom:calc(22px + env(safe-area-inset-bottom, 0px));
+    right:22px;
+    z-index:60;
+    background:transparent;
+    border:1px solid var(--bone-dim);
+    color:var(--bone-dim);
+    font-family:'Special Elite', monospace;
+    letter-spacing:0.15em;
+    font-size:11px;
+    padding:8px 14px;
+    text-transform:uppercase;
+    cursor:pointer;
+    opacity:0.55;
+    transition:opacity 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .sound-toggle:hover{
+    opacity:1;
+    color:var(--blood-bright);
+    border-color:var(--blood-bright);
+  }
+
+  .flash-cover{
+    position:fixed; inset:0;
+    background:#000;
+    z-index:5;
+    opacity:0;
+    pointer-events:none;
+  }
+  .flash-cover.on{
+    animation:jumpflash 0.22s steps(1);
+  }
+
+  .arrived h1.title{ animation:title-flicker-fast 0.6s infinite; }
+
+  @keyframes heartbeat{
+    0%{ opacity:0.5; }
+    14%{ opacity:1; }
+    22%{ opacity:0.5; }
+    32%{ opacity:0.85; }
+    42%{ opacity:0.45; }
+    100%{ opacity:0.45; }
+  }
+
+  @keyframes heartbeat-scale{
+    0%{ transform:scale(1); filter:brightness(1); }
+    14%{ transform:scale(1.035); filter:brightness(1.25); }
+    22%{ transform:scale(1); filter:brightness(1); }
+    32%{ transform:scale(1.02); filter:brightness(1.15); }
+    42%{ transform:scale(1); filter:brightness(1); }
+    100%{ transform:scale(1); filter:brightness(1); }
+  }
+
+  @keyframes title-flicker{
+    0%, 92%, 100%{ opacity:1; }
+    93%{ opacity:0.2; }
+    94%{ opacity:1; }
+    95%{ opacity:0.35; }
+    96%{ opacity:1; }
+  }
+
+  @keyframes title-flicker-fast{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.55; }
+  }
+
+  @keyframes glitch-jump{
+    0%{ transform:translate(0,0) skewX(0deg); text-shadow:2px 0 var(--blood-bright), -2px 0 #0a4; }
+    50%{ transform:translate(-3px,2px) skewX(4deg); }
+    100%{ transform:translate(0,0) skewX(0deg); }
+  }
+
+  @keyframes jumpflash{
+    0%{ opacity:0.9; }
+    100%{ opacity:0; }
+  }
+
+  /* ===== LIVE THEME: doomsday (archive keeps the original look) ===== */
+  .live-bg, .moon, .fog, .embers{ display:none; position:fixed; pointer-events:none; }
+  body[data-view="live"] .live-bg,
+  body[data-view="live"] .moon,
+  body[data-view="live"] .fog,
+  body[data-view="live"] .embers{ display:block; }
+  body[data-view="live"] .scanlines{ display:none; }
+  body[data-view="live"] .vignette{
+    background:radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.88) 100%);
+  }
+  body[data-view="live"] .pulse-glow{
+    background:radial-gradient(ellipse at 50% 115%, rgba(220,25,0,0.55) 0%, transparent 60%);
+    animation:siren 3.4s ease-in-out infinite;
+  }
+
+  .live-bg{
+    inset:0; z-index:1;
+    background:
+      radial-gradient(ellipse 90% 40% at 50% 112%, rgba(190,35,5,0.45) 0%, rgba(110,20,5,0.22) 40%, transparent 75%),
+      linear-gradient(180deg, #060607 0%, #121110 50%, #2a110a 100%);
+  }
+
+  /* a blacked-out sun with a bleeding red corona */
+  .moon{
+    z-index:2;
+    top:calc(8% + env(safe-area-inset-top, 0px));
+    right:8%;
+    width:clamp(64px, 12vw, 140px);
+    height:clamp(64px, 12vw, 140px);
+    border-radius:50%;
+    background:#000;
+    box-shadow:0 0 0 3px rgba(255,70,25,0.55), 0 0 70px rgba(255,50,10,0.55), 0 0 190px rgba(200,30,0,0.3);
+    animation:sun-throb 6s ease-in-out infinite;
+  }
+
+  /* smoke */
+  .fog{
+    z-index:3;
+    left:-50%; width:200%; height:42%;
+    filter:blur(30px);
+    background:
+      radial-gradient(ellipse 30% 60% at 20% 60%, rgba(90,80,75,0.35), transparent 70%),
+      radial-gradient(ellipse 28% 55% at 55% 50%, rgba(150,40,10,0.20), transparent 70%),
+      radial-gradient(ellipse 32% 60% at 85% 65%, rgba(90,80,75,0.30), transparent 70%);
+  }
+  .fog.a{ bottom:-6%; animation:fog-drift 52s ease-in-out infinite alternate; }
+  .fog.b{ bottom:12%; height:34%; opacity:0.5; animation:fog-drift 74s ease-in-out infinite alternate-reverse; }
+
+  /* falling ash */
+  .embers{ inset:0; z-index:4; overflow:hidden; }
+  .ember{
+    position:absolute; top:-10px; border-radius:50%;
+    background:rgba(205,198,190,0.7);
+    opacity:0;
+    animation:ash-fall linear infinite;
+  }
+
+  #live h1.title{
+    font-family:'Saira Stencil One', sans-serif;
+    font-weight:400;
+    font-size:clamp(2.2rem, 9vw, 6rem);
+    letter-spacing:0.2em;
+    color:#e9e6df;
+    text-shadow:0 0 16px rgba(255,40,10,0.5), 0 0 50px rgba(200,20,0,0.3), 0 3px 0 #000;
+    animation:failing-power 7s infinite;
+  }
+  /* hazard tape */
+  #live h1.title::after{
+    content:"";
+    display:block;
+    height:9px;
+    width:min(440px, 72%);
+    margin:20px auto 0;
+    background:repeating-linear-gradient(-45deg, #d6a400 0 10px, #0b0b0b 10px 20px);
+    opacity:0.85;
+  }
+  #live.arrived h1.title{ animation:title-flicker-fast 0.6s infinite; }
+  #live .date-line{
+    font-family:'Share Tech Mono', monospace;
+    color:#bdb8ae;
+    letter-spacing:0.3em;
+    margin-top:22px;
+    opacity:0.95;
+  }
+  #live .date-line span{ color:#ff3b1a; }
+  #live .num{
+    font-family:'Share Tech Mono', monospace;
+    font-size:clamp(2.4rem, 9vw, 6.2rem);
+    color:#e9e6df;
+    text-shadow:0 0 12px rgba(255,40,10,0.6), 0 0 42px rgba(220,20,0,0.35), 2px 2px 0 rgba(0,0,0,0.9);
+    animation:failing-power 7s infinite;
+  }
+  #live .num.glitch{ animation:failing-power 7s infinite, doom-glitch 0.24s steps(2); }
+  #live .label{
+    font-family:'Share Tech Mono', monospace;
+    color:#7d776d;
+    letter-spacing:0.4em;
+  }
+  #live .sep{
+    font-family:'Share Tech Mono', monospace;
+    color:#b3200f;
+    opacity:0.7;
+    font-size:clamp(1.8rem, 6vw, 4rem);
+  }
+  body[data-view="live"] .nav-link,
+  body[data-view="live"] .sound-toggle{
+    font-family:'Share Tech Mono', monospace;
+    color:#8d877c;
+    border-color:#5a554d;
+  }
+  body[data-view="live"] .nav-link:hover,
+  body[data-view="live"] .sound-toggle:hover{
+    color:#ff3b1a;
+    border-color:#ff3b1a;
+    opacity:1;
+  }
+
+  @keyframes siren{
+    0%,100%{ opacity:0.12; }
+    50%{ opacity:0.85; }
+  }
+  @keyframes sun-throb{
+    0%,100%{ box-shadow:0 0 0 3px rgba(255,70,25,0.55), 0 0 70px rgba(255,50,10,0.55), 0 0 190px rgba(200,30,0,0.3); }
+    50%{ box-shadow:0 0 0 3px rgba(255,90,35,0.8), 0 0 100px rgba(255,60,15,0.75), 0 0 240px rgba(220,35,0,0.45); }
+  }
+  @keyframes fog-drift{
+    from{ transform:translateX(-8%); }
+    to{ transform:translateX(8%); }
+  }
+  @keyframes ash-fall{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:0; }
+    10%{ opacity:0.75; }
+    90%{ opacity:0.6; }
+    100%{ transform:translate(var(--dx), 108vh) rotate(180deg); opacity:0; }
+  }
+  /* mostly steady, with rare brownouts like failing power */
+  @keyframes failing-power{
+    0%,92%,100%{ opacity:1; }
+    93%{ opacity:0.4; }
+    94%{ opacity:1; }
+    96%{ opacity:0.65; }
+    97%{ opacity:1; }
+  }
+  @keyframes doom-glitch{
+    0%{ transform:translate(-4px,0) skewX(-6deg); text-shadow:3px 0 #ff1a1a, -3px 0 #3df; }
+    50%{ transform:translate(4px,1px) skewX(4deg); opacity:0.25; }
+    100%{ transform:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; }
+  }
+</style>
+</head>
+<body data-view="live">
+
+  <div class="flash-cover" id="flashCover"></div>
+  <div class="pulse-glow"></div>
+  <div class="grain"></div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <!-- live theme layers (only shown on the live countdown) -->
+  <div class="live-bg"></div>
+  <div class="moon"></div>
+  <div class="fog a"></div>
+  <div class="fog b"></div>
+  <div class="embers" id="embers"></div>
+
+  <!-- LIVE: Halloween night -->
+  <div class="scene" id="live">
+    <h1 class="title">HALLOWEEN</h1>
+    <div class="date-line">Saturday, October 31st <span>&mdash; 4:00 PM</span></div>
+
+    <div class="countdown">
+      <div class="unit"><div class="num" id="days">00</div><div class="label">days</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num" id="hours">00</div><div class="label">hours</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num" id="mins">00</div><div class="label">mins</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num" id="secs">00</div><div class="label">secs</div></div>
+    </div>
+  </div>
+
+  <!-- ARCHIVE: the finished Homecoming countdown -->
+  <div class="scene" id="archive">
+    <div class="eyebrow">Archive &mdash; countdown ended</div>
+    <h1 class="title">HOMECOMING</h1>
+    <div class="date-line">Saturday, October 3rd <span>&mdash; 7:00 PM</span></div>
+
+    <div class="countdown">
+      <div class="unit"><div class="num">00</div><div class="label">days</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num">00</div><div class="label">hours</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num">00</div><div class="label">mins</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num">00</div><div class="label">secs</div></div>
+    </div>
+  </div>
+
+  <a class="nav-link" id="toArchive" href="#archive">archive</a>
+  <a class="nav-link" id="toLive" href="#live">&larr; live countdown</a>
+  <button class="sound-toggle" id="soundBtn">&#128264; sound</button>
+
+<script>
+  // Saturday, October 31st, 4:00 PM Eastern (EDT, UTC-4 on that date)
+  const target = new Date('2026-10-31T16:00:00-04:00');
+  const daysEl = document.getElementById('days');
+  const hoursEl = document.getElementById('hours');
+  const minsEl = document.getElementById('mins');
+  const secsEl = document.getElementById('secs');
+  const liveScene = document.getElementById('live');
+  const flashCover = document.getElementById('flashCover');
+
+  const pad = n => String(Math.max(0,n)).padStart(2,'0');
+
+  // view switching: #live (default) and #archive
+  function setView(name){
+    document.body.dataset.view = (name === 'archive') ? 'archive' : 'live';
+  }
+  function viewFromHash(){
+    return location.hash === '#archive' ? 'archive' : 'live';
+  }
+  setView(viewFromHash());
+  window.addEventListener('hashchange', () => setView(viewFromHash()));
+  document.querySelectorAll('.nav-link').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const name = a.getAttribute('href').slice(1);
+      setView(name);
+      try { location.hash = name; } catch(err) {}
+    });
+  });
+
+  const isLive = () => document.body.dataset.view === 'live';
+
+  function tick(){
+    const now = new Date();
+    const diff = target - now;
+
+    if(diff <= 0){
+      daysEl.textContent = '00';
+      hoursEl.textContent = '00';
+      minsEl.textContent = '00';
+      secsEl.textContent = '00';
+      liveScene.classList.add('arrived');
+      return;
+    }
+
+    const d = Math.floor(diff / (1000*60*60*24));
+    const h = Math.floor((diff / (1000*60*60)) % 24);
+    const m = Math.floor((diff / (1000*60)) % 60);
+    const s = Math.floor((diff / 1000) % 60);
+
+    daysEl.textContent = pad(d);
+    hoursEl.textContent = pad(h);
+    minsEl.textContent = pad(m);
+    secsEl.textContent = pad(s);
+
+    if(s === 0 && isLive()){
+      if(m === 0){
+        hourlyBell();
+      } else {
+        clockChime();
+      }
+    }
+  }
+
+  tick();
+  setInterval(tick, 1000);
+
+  // random flicker glitch on the live numbers, like a dying light
+  function scheduleGlitch(){
+    const delay = 3500 + Math.random()*6000;
+    setTimeout(() => {
+      if(isLive()){
+        const nums = document.querySelectorAll('#live .num');
+        const pick = nums[Math.floor(Math.random()*nums.length)];
+        pick.classList.add('glitch');
+        setTimeout(() => pick.classList.remove('glitch'), 160);
+        if(Math.random() < 0.25){
+          flashCover.classList.add('on');
+          setTimeout(() => flashCover.classList.remove('on'), 220);
+        }
+      }
+      scheduleGlitch();
+    }, delay);
+  }
+  scheduleGlitch();
+
+  // falling ash for the live theme
+  (function(){
+    const box = document.getElementById('embers');
+    for(let i = 0; i < 48; i++){
+      const e = document.createElement('span');
+      e.className = 'ember';
+      const size = 2 + Math.random()*4;
+      e.style.left = (Math.random()*100) + '%';
+      e.style.width = size + 'px';
+      e.style.height = size + 'px';
+      e.style.animationDuration = (14 + Math.random()*16) + 's';
+      e.style.animationDelay = (-Math.random()*30) + 's';
+      e.style.setProperty('--dx', ((Math.random()*2 - 1)*90) + 'px');
+      box.appendChild(e);
+    }
+  })();
+
+  // optional ambient heartbeat + tolling bells using Web Audio (muted by default)
+  let audioCtx = null;
+  let soundOn = false;
+  let heartbeatTimer = null;
+
+  function thump(){
+    if(!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 55;
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.6, audioCtx.currentTime + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.4);
+  }
+
+  function clockChime(){
+    if(!audioCtx || !soundOn) return;
+    const now = audioCtx.currentTime;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 900;
+    filter.connect(audioCtx.destination);
+
+    const partials = [
+      { freq: 82,  type: 'sine',     gain: 0.5,  detune: 0 },
+      { freq: 123, type: 'triangle', gain: 0.28, detune: -14 },
+      { freq: 196, type: 'sine',     gain: 0.14, detune: 9 }
+    ];
+
+    partials.forEach(p => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = p.type;
+      osc.frequency.value = p.freq;
+      osc.detune.value = p.detune;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(p.gain, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
+      osc.connect(gain).connect(filter);
+      osc.start(now);
+      osc.stop(now + 2.3);
+    });
+
+    const nums = document.querySelectorAll('#live .num');
+    nums.forEach(n => n.classList.add('glitch'));
+    setTimeout(() => nums.forEach(n => n.classList.remove('glitch')), 160);
+  }
+
+  function hourlyBell(){
+    if(!audioCtx || !soundOn) return;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1100;
+    filter.connect(audioCtx.destination);
+
+    const strike = (startAt) => {
+      const now = audioCtx.currentTime + startAt;
+      const partials = [
+        { freq: 48,  type: 'sine',     gain: 0.65, detune: 0 },
+        { freq: 72,  type: 'triangle', gain: 0.35, detune: -10 },
+        { freq: 97,  type: 'sine',     gain: 0.22, detune: 13 },
+        { freq: 146, type: 'sine',     gain: 0.1,  detune: -6 }
+      ];
+      partials.forEach(p => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = p.type;
+        osc.frequency.value = p.freq;
+        osc.detune.value = p.detune;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(p.gain, now + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.4);
+        osc.connect(gain).connect(filter);
+        osc.start(now);
+        osc.stop(now + 3.5);
+      });
+    };
+
+    strike(0);
+    strike(1.1);
+
+    const nums = document.querySelectorAll('#live .num');
+    nums.forEach(n => n.classList.add('glitch'));
+    setTimeout(() => nums.forEach(n => n.classList.remove('glitch')), 220);
+    flashCover.classList.add('on');
+    setTimeout(() => flashCover.classList.remove('on'), 220);
+  }
+
+  document.getElementById('soundBtn').addEventListener('click', function(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    soundOn = !soundOn;
+    this.innerHTML = soundOn ? '&#128266; sound' : '&#128264; sound';
+    if(soundOn){
+      thump();
+      heartbeatTimer = setInterval(thump, 1150);
+    } else {
+      clearInterval(heartbeatTimer);
+    }
+  });
+</script>
+
+</body>
+</html>
